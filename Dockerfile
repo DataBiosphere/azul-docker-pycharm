@@ -10,8 +10,8 @@ RUN \
   apt-get update \
   && apt-get upgrade -y \
   && apt-get install --no-install-recommends -y \
-    python3 python3-dev python3-setuptools python3-pip \
-    gcc git openssh-client less curl \
+    python3 python3-dev \
+    gcc git openssh-client less curl ca-certificates \
     libxtst-dev libxext-dev libxrender-dev libfreetype6-dev \
     libfontconfig1 libgtk2.0-0 libxslt1.1 libxxf86vm1 \
   && rm -rf /var/lib/apt/lists/*
@@ -29,6 +29,15 @@ RUN set -o pipefail \
   && curl -fsSL "${pycharm_source}" -o installer.tgz \
   && tar --strip-components=1 -xzf installer.tgz \
   && rm installer.tgz
+
+# CVE-2021-23383 CVE-2021-23369 CVE-2019-19919 GHSA-q42p-pg8m-cqh6
+# GHSA-q2c6-c6pm-g3gh GHSA-g9r4-xpmj-mj65 GHSA-2cf5-4w76-r9qv CVE-2019-20920
+# GHSA-h6ch-v84p-w6p9⁠ CVE-2020-7712⁠
+RUN rm -rf /opt/pycharm/plugins/textmate
+
+# CVE-2023-24539 CVE-2023-24540 CVE-2023-29400 CVE-2023-29403 CVE-2023-39325
+# CVE-2023-44487 CVE-2021-21353⁠
+RUN rm /opt/pycharm/bin/repair
 
 RUN useradd -ms /bin/bash developer
 
