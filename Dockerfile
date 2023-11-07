@@ -18,18 +18,16 @@ RUN \
   && rm -rf /var/lib/apt/lists/* \
   && useradd -ms /bin/bash developer
 
-ARG PYCHARM_VERSION=2022.3.3
-ARG PYCHARM_BUILD=2022.3.3
-
-ARG pycharm_local_dir=.PyCharmCE${PYCHARM_VERSION}
 
 WORKDIR /opt/pycharm
 
 SHELL ["/bin/bash", "-c"]
 
+ARG PYCHARM_VERSION
+
 RUN set -o pipefail \
   && export pycharm_arch=$(python3 -c "print(dict(amd64='',arm64='-aarch64')['${TARGETARCH}'])") \
-  && export pycharm_source="https://download.jetbrains.com/python/pycharm-community-${PYCHARM_BUILD}${pycharm_arch}.tar.gz" \
+  && export pycharm_source="https://download.jetbrains.com/python/pycharm-community-${PYCHARM_VERSION}${pycharm_arch}.tar.gz" \
   && echo "Downloading ${pycharm_source}" \
   && curl -fsSL "${pycharm_source}" -o installer.tgz \
   && tar --strip-components=1 -xzf installer.tgz \
@@ -37,6 +35,8 @@ RUN set -o pipefail \
 
 USER developer
 ENV HOME /home/developer
+
+ARG pycharm_local_dir=.PyCharmCE${PYCHARM_VERSION}
 
 RUN mkdir /home/developer/.PyCharm \
   && ln -sf /home/developer/.PyCharm "/home/developer/$pycharm_local_dir"

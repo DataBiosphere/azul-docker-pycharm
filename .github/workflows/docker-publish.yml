@@ -8,6 +8,7 @@ on:
 
 env:
   azul_docker_pycharm_version: 4  # increment this to update the OS packages
+  PYCHARM_VERSION: 2023.2.3
 
 jobs:
   build:
@@ -35,16 +36,13 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Get the current branch name
-        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
-        id: vars
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           build-args: |
             azul_docker_pycharm_version=${{ env.azul_docker_pycharm_version }}
+            PYCHARM_VERSION=${{ env.PYCHARM_VERSION }}
           context: .
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ vars.DOCKERHUB_REPOSITORY }}:${{ steps.vars.outputs.branch }}-${{ env.azul_docker_pycharm_version }}
+          tags: ${{ vars.DOCKERHUB_REPOSITORY }}:${{ env.PYCHARM_VERSION }}-${{ env.azul_docker_pycharm_version }}
