@@ -1,6 +1,10 @@
 name: Docker
 
-on: push
+on:
+  push:
+    branches-ignore:
+      - "*-PR"
+  pull_request:
 
 env:
   azul_docker_pycharm_version: 4  # increment this to update the OS packages
@@ -40,10 +44,5 @@ jobs:
             azul_docker_pycharm_version=${{ env.azul_docker_pycharm_version }}
           context: .
           platforms: linux/amd64,linux/arm64
-          push: >
-            ${{
-            github.event_name != 'pull_request'
-            && steps.vars.outputs.branch != 'master'
-            && !endsWith(steps.vars.outputs.branch, '-PR')
-            }}
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ vars.DOCKERHUB_REPOSITORY }}:${{ steps.vars.outputs.branch }}-${{ env.azul_docker_pycharm_version }}
