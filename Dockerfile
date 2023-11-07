@@ -15,9 +15,7 @@ RUN \
     gcc git openssh-client less curl \
     libxtst-dev libxext-dev libxrender-dev libfreetype6-dev \
     libfontconfig1 libgtk2.0-0 libxslt1.1 libxxf86vm1 \
-  && rm -rf /var/lib/apt/lists/* \
-  && useradd -ms /bin/bash developer
-
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/pycharm
 
@@ -32,6 +30,8 @@ RUN set -o pipefail \
   && curl -fsSL "${pycharm_source}" -o installer.tgz \
   && tar --strip-components=1 -xzf installer.tgz \
   && rm installer.tgz
+
+RUN useradd -ms /bin/bash developer
 
 USER developer
 ENV HOME /home/developer
