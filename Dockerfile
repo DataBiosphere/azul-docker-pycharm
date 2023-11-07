@@ -2,8 +2,7 @@ FROM --platform=${TARGETPLATFORM} debian:bullseye-20230502
 
 ARG TARGETARCH
 
-LABEL maintainer "Viktor Adam <rycus86@gmail.com>"
-LABEL maintainer "Azul Group <azul-group@ucsc.edu>"
+LABEL maintainer="Azul Group <azul-group@ucsc.edu>"
 
 ARG azul_docker_pycharm_version
 
