@@ -1,4 +1,4 @@
-FROM --platform=${TARGETPLATFORM} debian:bullseye-20230502
+FROM --platform=${TARGETPLATFORM} debian:bullseye-20231030
 
 ARG TARGETARCH
 
