@@ -26,6 +26,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          # To facilitate local builds using the Makefile
+          driver-opts: ${{ startsWith(vars.DOCKERHUB_REPOSITORY, 'localhost:') && 'network=host' || '' }}
 
       - name: Log into registry
         if: >
