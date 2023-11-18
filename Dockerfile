@@ -1,10 +1,10 @@
-FROM --platform=${TARGETPLATFORM} debian:bullseye-20231030
+FROM --platform=${TARGETPLATFORM} debian:${azul_docker_pycharm_base_image_tag}
 
 ARG TARGETARCH
 
 LABEL maintainer="Azul Group <azul-group@ucsc.edu>"
 
-ARG azul_docker_pycharm_version
+ARG azul_docker_pycharm_internal_version
 
 RUN \
   apt-get update \
@@ -20,11 +20,11 @@ WORKDIR /opt/pycharm
 
 SHELL ["/bin/bash", "-c"]
 
-ARG PYCHARM_VERSION
+ARG azul_docker_pycharm_upstream_version
 
 RUN set -o pipefail \
   && export pycharm_arch=$(python3 -c "print(dict(amd64='',arm64='-aarch64')['${TARGETARCH}'])") \
-  && export pycharm_source="https://download.jetbrains.com/python/pycharm-community-${PYCHARM_VERSION}${pycharm_arch}.tar.gz" \
+  && export pycharm_source="https://download.jetbrains.com/python/pycharm-community-${azul_docker_pycharm_upstream_version}${pycharm_arch}.tar.gz" \
   && echo "Downloading ${pycharm_source}" \
   && curl -fsSL "${pycharm_source}" -o installer.tgz \
   && tar --strip-components=1 -xzf installer.tgz \
@@ -44,7 +44,7 @@ RUN useradd -ms /bin/bash developer
 USER developer
 ENV HOME /home/developer
 
-ARG pycharm_local_dir=.PyCharmCE${PYCHARM_VERSION}
+ARG pycharm_local_dir=.PyCharmCE${azul_docker_pycharm_upstream_version}
 
 RUN mkdir /home/developer/.PyCharm \
   && ln -sf /home/developer/.PyCharm "/home/developer/$pycharm_local_dir"
