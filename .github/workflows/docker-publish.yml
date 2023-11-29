@@ -7,9 +7,9 @@ on:
       - "*-PR"
 
 env:
-  azul_docker_pycharm_base_image_tag: bullseye-20231030
-  azul_docker_pycharm_upstream_version: 2023.2.3
-  azul_docker_pycharm_internal_version: 5  # increment this to update the OS packages
+  azul_docker_pycharm_base_image_tag: bullseye-20231120
+  azul_docker_pycharm_upstream_version: 2023.2.5
+  azul_docker_pycharm_internal_version: 6  # increment this to update the OS packages
 
 jobs:
   build:
