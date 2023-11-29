@@ -1,3 +1,5 @@
+ARG azul_docker_pycharm_base_image_tag
+
 FROM --platform=${TARGETPLATFORM} debian:${azul_docker_pycharm_base_image_tag}
 
 ARG TARGETARCH
