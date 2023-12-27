@@ -42,6 +42,6 @@ docker pull localhost:5000/docker.io/ucscgi/azul-pycharm:2023.2.3-5
 # If an unnecessary package is found to have critical or high vulnerabilities,
 # add a `RUN` instruction to the Dockerfile to remove the package.
 # To test the image in Azul, run:
-cd ../azul; azul_docker_pycharm_version=2023.2.3-5 azul_docker_registry=localhost:5000/ make format
+(cd ../azul && azul_docker_pycharm_version=2023.2.3-5 azul_docker_registry=localhost:5000/ make format)
 make stop_registry
 ```
