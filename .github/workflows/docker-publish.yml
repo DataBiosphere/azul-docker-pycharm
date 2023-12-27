@@ -7,9 +7,31 @@ on:
       - "*-PR"
 
 env:
+  # The fully qualified image name of the image to build. The first component is
+  # the host name of the registry that primarily hosts the image.
+  #
+  azul_docker_pycharm_image: docker.io/ucscgi/azul-pycharm
+
+  # An optional prefix for the image name if the image is to be pushed to an
+  # alternate registry instead of the one noted in the image name above.
+  #
+  azul_docker_registry: ""
+
+  # The tag of the image that's used as the base for this image. Because this
+  # value isn't reflected in the tag for this image, you also need to bump the
+  # internal version below when changing this variable.
+  #
   azul_docker_pycharm_base_image_tag: bullseye-20231120
+
+  # The version of PyCharm to install in this image.
+  #
   azul_docker_pycharm_upstream_version: 2023.2.5
-  azul_docker_pycharm_internal_version: 7  # increment this to update the OS packages
+
+  # The version of this image. The image will be tagged with the version of the
+  # upstream image followed by the value of this variable. Increment this value
+  # to update the OS packages installed in the image.
+  #
+  azul_docker_pycharm_internal_version: 7
 
 jobs:
   build:
@@ -17,7 +39,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,16 +52,16 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           # To facilitate local builds using the Makefile
-          driver-opts: ${{ startsWith(vars.DOCKERHUB_REPOSITORY, 'localhost:') && 'network=host' || '' }}
+          driver-opts: ${{ startsWith(env.azul_docker_registry, 'localhost:') && 'network=host' || '' }}
 
       - name: Log into registry
         if: >
           github.event_name != 'pull_request'
-          && vars.DOCKERHUB_USERNAME
+          && vars.AZUL_DOCKER_REGISTRY_USER
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          username: ${{ vars.AZUL_DOCKER_REGISTRY_USER }}
+          password: ${{ secrets.AZUL_DOCKER_REGISTRY_PASSWORD }}
 
       - name: Build and conditionally push Docker image
         uses: docker/build-push-action@v5
@@ -53,10 +74,19 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: "${{ format(
-            '{0}:{1}-{2}', 
-            vars.DOCKERHUB_REPOSITORY,
+            '{0}{1}:{2}-{3}', 
+            env.azul_docker_registry,
+            env.azul_docker_pycharm_image,
             env.azul_docker_pycharm_upstream_version,
             env.azul_docker_pycharm_internal_version
           ) }}"
-          cache-from: type=registry,ref=${{ vars.DOCKERHUB_REPOSITORY }}_buildcache
-          cache-to: type=registry,ref=${{ vars.DOCKERHUB_REPOSITORY }}_buildcache,mode=max
+          cache-from: "${{ format(
+            'type=registry,ref={0}{1}_buildcache',
+            env.azul_docker_registry,
+            env.azul_docker_pycharm_image
+          ) }}"
+          cache-to: "${{ format(
+            'type=registry,ref={0}{1}_buildcache,mode=max',
+            env.azul_docker_registry,
+            env.azul_docker_pycharm_image
+          ) }}"
