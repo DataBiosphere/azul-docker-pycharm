@@ -3,8 +3,8 @@ name: Docker
 on:
   pull_request:
   push:
-    branches-ignore:
-      - "*-PR"
+    branches:
+      - master
 
 env:
   # The fully qualified image name of the image to build. The first component is
