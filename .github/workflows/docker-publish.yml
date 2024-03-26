@@ -3,8 +3,8 @@ name: Docker
 on:
   pull_request:
   push:
-    branches-ignore:
-      - "*-PR"
+    branches:
+      - master
 
 env:
   # The fully qualified image name of the image to build. The first component is
@@ -85,7 +85,9 @@ jobs:
             env.azul_docker_registry,
             env.azul_docker_pycharm_image
           ) }}"
-          cache-to: "${{ format(
+          # The value after '&&' in a ternary operator must be truthy, and since
+          # an empty string is falsy, we use ' ' instead.
+          cache-to: "${{ github.event_name == 'pull_request' && ' ' || format(
             'type=registry,ref={0}{1}_buildcache,mode=max',
             env.azul_docker_registry,
             env.azul_docker_pycharm_image
