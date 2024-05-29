@@ -25,15 +25,13 @@ env:
 
   # The version of PyCharm to install in this image.
   #
-  # FIXME: Wait for the PyCharm 2024.1.1 image release to upgrade
-  #        https://github.com/DataBiosphere/azul/issues/6173
-  azul_docker_pycharm_upstream_version: 2023.3.5
+  azul_docker_pycharm_upstream_version: 2024.1.2
 
   # The version of this image. The image will be tagged with the version of the
   # upstream image followed by the value of this variable. Increment this value
   # to update the OS packages installed in the image.
   #
-  azul_docker_pycharm_internal_version: 23
+  azul_docker_pycharm_internal_version: 24
 
 jobs:
   build:
