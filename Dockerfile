@@ -13,7 +13,7 @@ RUN \
   && apt-get upgrade -y \
   && apt-get install --no-install-recommends -y \
     python3 python3-dev \
-    gcc git openssh-client less curl ca-certificates \
+    gcc openssh-client less curl ca-certificates \
     libxtst-dev libxext-dev libxrender-dev libfreetype6-dev \
     libfontconfig1 libgtk2.0-0 libxslt1.1 libxxf86vm1 \
   && rm -rf /var/lib/apt/lists/*
