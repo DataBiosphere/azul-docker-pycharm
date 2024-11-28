@@ -37,10 +37,6 @@ RUN set -o pipefail \
 # GHSA-h6ch-v84p-w6p9⁠ CVE-2020-7712⁠
 RUN rm -rf /opt/pycharm/plugins/textmate
 
-# CVE-2023-24539 CVE-2023-24540 CVE-2023-29400 CVE-2023-29403 CVE-2023-39325
-# CVE-2023-44487 CVE-2021-21353⁠
-RUN rm /opt/pycharm/bin/repair
-
 RUN useradd -ms /bin/bash developer
 
 USER developer
