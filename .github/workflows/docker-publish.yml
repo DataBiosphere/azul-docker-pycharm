@@ -21,17 +21,17 @@ env:
   # value isn't reflected in the tag for this image, you also need to bump the
   # internal version below when changing this variable.
   #
-  azul_docker_pycharm_base_image_tag: bookworm-20250203
+  azul_docker_pycharm_base_image_tag: bookworm-20250224
 
   # The version of PyCharm to install in this image.
   #
-  azul_docker_pycharm_upstream_version: 2024.3.3
+  azul_docker_pycharm_upstream_version: 2024.3.4
 
   # The version of this image. The image will be tagged with the version of the
   # upstream image followed by the value of this variable. Increment this value
   # to update the OS packages installed in the image.
   #
-  azul_docker_pycharm_internal_version: 45
+  azul_docker_pycharm_internal_version: 46
 
 jobs:
   build:
