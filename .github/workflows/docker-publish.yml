@@ -31,6 +31,8 @@ env:
   # upstream image followed by the value of this variable. Increment this value
   # to update the OS packages installed in the image.
   #
+  # FIXME: Wait for a latter PyCharm 2025.x image release to upgrade
+  #        https://github.com/DataBiosphere/azul/issues/7117
   azul_docker_pycharm_internal_version: 52
 
 jobs:
