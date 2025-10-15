@@ -58,7 +58,8 @@ git diff
 >                },
 >                'elasticsearch': {
 >                    'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.18-13'
-make image_manifests.json
+_refresh
+make docker_images.json
 azul_docker_registry="" make format
 cd -
 make stop_registry
