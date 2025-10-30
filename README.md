@@ -36,31 +36,29 @@ act # the first invocation is to interactively configure `act`
 make start_registry
 make images
 # scroll up in terminal output, note image name
-# |   "image.name": "localhost:5000/docker.io/ucscgi/azul-pycharm:2023.2.3-5"
-docker pull localhost:5000/docker.io/ucscgi/azul-pycharm:2023.2.3-5
+# |   "image.name": "localhost:5000/docker.io/ucscgi/azul-pycharm:2025.2.3-65"
+docker pull localhost:5000/docker.io/ucscgi/azul-pycharm:2025.2.3-65
 # To examine the image for vulnerabilities, browse the image in Docker Desktop.
 # If an unnecessary package is found to have critical or high vulnerabilities,
 # To test the image in Azul, you will need to temporarily modify Azul's
 # `environment.py` to set the appropriate `azul_docker_images` value using the
 # full image name noted above (starting with "localhost").
 cd ../azul
-git diff
->   diff --git a/environment.py b/environment.py
->   index f888a1b8e..e41273695 100644
->   --- a/environment.py
->   +++ b/environment.py
->   @@ -273,7 +273,7 @@ def env() -> Mapping[str, Optional[str]]:
->                    'ref': 'docker.io/library/python:{azul_python_version}-bullseye'
->                },
->                'pycharm': {
->   -                'ref': 'docker.io/ucscgi/azul-pycharm:2023.3.4-15'
->   +                'ref': 'localhost:5000/docker.io/ucscgi/azul-pycharm:2023.3.4-15'
->                },
->                'elasticsearch': {
->                    'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.18-13'
-_refresh
-make docker_images.json
-azul_docker_registry="" make format
+$ git diff
+diff --git a/Makefile b/Makefile
+index 04b40feb0..afdf1f57d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -243,7 +243,7 @@ format: check_venv check_docker
+            --rm \
+            --volume $$(python scripts/resolve_container_path.py $(project_root)):/home/developer/azul \
+            --workdir /home/developer/azul \
+-           $$(AZUL_DEBUG=0 python -m azul 'docker.resolve_docker_image_for_launch("pycharm")') \
++           localhost:5000/docker.io/ucscgi/azul-pycharm:2025.2.3-65 \
+            /opt/pycharm/bin/format.sh -r -settings .pycharm.style.xml -mask '*.py' $(relative_sources)
+ 
+ test_args = -m unittest discover --verbose test
+make format
 cd -
 make stop_registry
 ```
