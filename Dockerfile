@@ -58,7 +58,7 @@ RUN rm -rf /opt/pycharm/plugins/textmate
 RUN useradd -ms /bin/bash developer
 
 USER developer
-ENV HOME /home/developer
+ENV HOME=/home/developer
 
 ARG pycharm_local_dir=.PyCharmCE${azul_docker_pycharm_upstream_version}
 
