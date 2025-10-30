@@ -1,4 +1,4 @@
-ARG azul_docker_pycharm_base_image_tag
+ARG azul_docker_pycharm_base_image_tag=no_tag
 
 FROM debian:${azul_docker_pycharm_base_image_tag}
 
@@ -6,7 +6,7 @@ ARG TARGETARCH
 
 LABEL maintainer="Azul Group <azul-group@ucsc.edu>"
 
-ARG azul_docker_pycharm_internal_version
+ARG azul_docker_pycharm_internal_version=no_version
 
 RUN \
   apt-get update \
