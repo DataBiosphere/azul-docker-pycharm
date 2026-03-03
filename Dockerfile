@@ -26,7 +26,7 @@ ARG azul_docker_pycharm_upstream_version
 
 RUN set -o pipefail \
   && export pycharm_arch=$(python3 -c "print(dict(amd64='',arm64='-aarch64')['${TARGETARCH}'])") \
-  && export pycharm_source="https://download.jetbrains.com/python/pycharm-community-${azul_docker_pycharm_upstream_version}${pycharm_arch}.tar.gz" \
+  && export pycharm_source="https://download.jetbrains.com/python/pycharm-${azul_docker_pycharm_upstream_version}${pycharm_arch}.tar.gz" \
   && echo "Downloading ${pycharm_source}" \
   && curl -fsSL "${pycharm_source}" -o installer.tgz \
   && tar --strip-components=1 -xzf installer.tgz \
