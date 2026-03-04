@@ -25,7 +25,7 @@ env:
 
   # The version of PyCharm to install in this image.
   #
-  azul_docker_pycharm_upstream_version: 2025.3.3
+  azul_docker_pycharm_upstream_version: 2025.2.6
 
   # The version of this image. The image will be tagged with the version of the
   # upstream image followed by the value of this variable. Increment this value
