@@ -25,6 +25,9 @@ env:
 
   # The version of PyCharm to install in this image.
   #
+  # FIXME: Update PyCharm image tot Update PyCharm Image to 2025.3
+  #        https://github.com/DataBiosphere/azul/issues/7825
+  #
   azul_docker_pycharm_upstream_version: 2025.2.6
 
   # The version of this image. The image will be tagged with the version of the
