@@ -21,20 +21,20 @@ env:
   # value isn't reflected in the tag for this image, you also need to bump the
   # internal version below when changing this variable.
   #
-  azul_docker_pycharm_base_image_tag: trixie-20260406-slim
+  azul_docker_pycharm_base_image_tag: trixie-20260421-slim
 
   # The version of PyCharm to install in this image.
   #
   # FIXME: Update PyCharm image to 2025.3, once we delete vulnerable binaries
   #        https://github.com/DataBiosphere/azul/issues/7825
   #
-  azul_docker_pycharm_upstream_version: 2025.2.6
+  azul_docker_pycharm_upstream_version: 2025.2.6.1
 
   # The version of this image. The image will be tagged with the version of the
   # upstream image followed by the value of this variable. Increment this value
   # to update the OS packages installed in the image.
   #
-  azul_docker_pycharm_internal_version: 78
+  azul_docker_pycharm_internal_version: 79
 
 jobs:
   build:
