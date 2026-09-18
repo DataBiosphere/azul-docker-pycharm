@@ -135,12 +135,16 @@ ARG azul_docker_pycharm_upstream_version
 # symlinked to one that does not, for `JAVA_HOME` to name below. That is how the
 # launcher finds a JRE once the bundled one is gone.
 #
+# Only what running the formatter needs is installed. Unpacking the distribution
+# needs more than this, but that happens in the stage above, whose packages stay
+# there.
+#
 RUN \
   apt-get update \
   && apt-get upgrade -y \
   && apt-get install --no-install-recommends -y \
-    zip unzip python3 python3-dev openjdk-21-jre-headless \
-    gcc openssh-client less curl ca-certificates \
+    python3 openjdk-21-jre-headless \
+    openssh-client less ca-certificates \
     libxtst-dev libxext-dev libxrender-dev libfreetype6-dev \
     libfontconfig1 libgtk2.0-0 libxslt1.1 libxxf86vm1 \
   && rm -rf /var/lib/apt/lists/* \
