@@ -24,40 +24,74 @@ SHELL ["/bin/bash", "-c"]
 
 ARG azul_docker_pycharm_upstream_version
 
+# Install PyCharm, and eliminate in the same instruction everything we don't
+# need, because an image only ever shrinks within the instruction that creates
+# the layer, never in a later one.
+#
+# The archive lost its `community` infix in 2025.3, when JetBrains merged the
+# two editions into a single distribution.
+#
+# The checksums are the ones JetBrains publishes alongside the archives. Only
+# the one for the architecture being built is present, hence --ignore-missing.
+# Run `make pycharm_checksums` after changing the version of PyCharm.
+#
+# `pycharm_unused_jars.txt` names the platform JARs that no class is ever loaded
+# from while formatting, half of the platform's JARs. The list was derived by
+# running the formatter over the Azul code base with `-verbose:class` and keeping
+# the JARs that no loaded class came from. It holds for both architectures, whose
+# archives contain the same JARs, and has to be derived anew for every release of
+# PyCharm. A JAR that some future source file turns out to need announces itself
+# as a `NoClassDefFoundError` from the formatter, and the remedy is to remove
+# that JAR from the list. Use Claude with the `pycharm-upgrade` skill to derive
+# the list again.
+#
+# The list subsumes `lib/protobuf.jar`, which an earlier instruction removed for
+# being vulnerable.
+#
+# Carving a package out of a JAR covers what the list cannot express: a JAR the
+# formatter does load may still carry a package we have no use for. The JAR to
+# carve is no longer named, because the name this was written for,
+# `lib/lib-client.jar`, did not survive one upgrade; every JAR that remains is
+# searched instead, and the package deleted from wherever it turns up.
+#
+# The instruction this grew out of also named Netty, but its pattern was the
+# package path reversed and so never matched it in any release. Netty must stay
+# regardless: formatting loads 320 of its classes, whereas it loads none from
+# the I2P crypto library that sshj bundles.
+#
+COPY pycharm_checksums.txt pycharm_unused_jars.txt /tmp/
+
 RUN set -o pipefail \
   && export pycharm_arch=$(python3 -c "print(dict(amd64='',arm64='-aarch64')['${TARGETARCH}'])") \
-  # FIXME: pycharm_source's value will need to be updated as part of https://github.com/DataBiosphere/azul/issues/7825
-  && export pycharm_source="https://download.jetbrains.com/python/pycharm-community-${azul_docker_pycharm_upstream_version}${pycharm_arch}.tar.gz" \
-  && echo "Downloading ${pycharm_source}" \
-  && curl -fsSL "${pycharm_source}" -o installer.tgz \
-  && tar --strip-components=1 -xzf installer.tgz \
-  && rm installer.tgz
+  && export pycharm_tarball="pycharm-${azul_docker_pycharm_upstream_version}${pycharm_arch}.tar.gz" \
+  && echo "Downloading ${pycharm_tarball}" \
+  && curl -fsSL "https://download.jetbrains.com/python/${pycharm_tarball}" \
+     -o "/tmp/${pycharm_tarball}" \
+  && ( cd /tmp && sha256sum --ignore-missing -c pycharm_checksums.txt ) \
+  && tar --strip-components=1 -xzf "/tmp/${pycharm_tarball}" \
+  && rm -rf plugins/textmate plugins/tasks plugins/python-ce/helpers \
+  && xargs rm < /tmp/pycharm_unused_jars.txt \
+  && for jar in $(find . -name '*.jar') ; do \
+       entries=$( \
+         zipinfo -1 "$jar" \
+         | grep \
+           -e net/i2p/crypto \
+         || true \
+       ) ; \
+       if [ -n "$entries" ] ; then \
+         echo "Carving $(echo "$entries" | wc -l) entries out of $jar" ; \
+         zip -q -d "$jar" $entries ; \
+       fi ; \
+     done \
+  && rm "/tmp/${pycharm_tarball}" \
+        /tmp/pycharm_checksums.txt \
+        /tmp/pycharm_unused_jars.txt
 
 # Eliminate vulnerable OS packages not needed for how we use this image
 #
 RUN dpkg --remove --force-depends \
     linux-libc-dev \
     expat libexpat1 libexpat1-dev
-
-# Eliminate vulnerable PyCharm libraries, plugins, or parts thereof that are not
-# needed for how we use this image
-#
-RUN rm -rf  \
-    /opt/pycharm/plugins/textmate  \
-    /opt/pycharm/plugins/tasks  \
-    /opt/pycharm/lib/protobuf.jar \
-    /opt/pycharm/plugins/python-ce/helpers
-
-# Eliminate vulnerable Java packages from fat JARs that PyCharm depends on, but
-# that are not needed for how we use this image
-#
-RUN zip -d /opt/pycharm/lib/lib-client.jar \
-    $( \
-      zipinfo -1 /opt/pycharm/lib/lib-client.jar \
-      | grep  \
-        -e netty[./]io  \
-        -e net[./]i2p[./]crypto \
-    )
 
 RUN useradd -ms /bin/bash developer
 
