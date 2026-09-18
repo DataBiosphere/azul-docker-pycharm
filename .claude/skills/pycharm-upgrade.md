@@ -1,6 +1,6 @@
 ---
 name: pycharm-upgrade
-description: "Upgrade the PyCharm in this image, and derive anew the list of platform JARs the formatter never loads."
+description: "Upgrade the PyCharm in this image: the plugins and platform JARs it keeps, and the Netty it substitutes."
 user_invocable: true
 ---
 
@@ -14,9 +14,14 @@ runs `/opt/pycharm/bin/format.sh` in a container from it. Everything this image
 strips away — vulnerable OS packages, every plugin outside
 `pycharm_plugins.txt`, the bundled runtime, and the JARs named in
 `pycharm_unused_jars.txt` — is stripped on the assumption that formatting is
-all that has to keep working. Judge an upgrade by that, not by whether the IDE
-still starts. Rather more than half of the distribution is gone, and most of
-what it does still carry is never loaded.
+all that has to keep working. So is the Netty that `netty_splice.py` swaps for
+a current release. Judge an upgrade by that, not by whether the IDE still
+starts. Rather more than half of the distribution is gone, and most of what it
+does still carry is never loaded.
+
+Three files drive it, and an upgrade may need all three revisited:
+`pycharm_plugins.txt`, `pycharm_unused_jars.txt`, and
+`pycharm_netty_checksums.txt`.
 
 Every step compares formatted output against a reference produced by the image
 that is being replaced. Nothing is accepted because it looks right. Budget two
@@ -24,8 +29,9 @@ hours, most of it waiting for builds and formatter runs.
 
 ## Step 0: Refresh the checksums, and expect the name to change
 
-Run `make pycharm_checksums` first; it reads the version from the workflow and
-fetches what JetBrains publishes next to the archives. A 404 means the archive
+Run `make pycharm_checksums` first; it rewrites `pycharm_checksums.txt` from
+the version in the workflow, fetching what JetBrains publishes next to the
+archives. A 404 means the archive
 is not named what `Dockerfile` expects. JetBrains renames it from time to time:
 2025.3 dropped the `community` infix that every release before it carried, when
 the two editions merged into one distribution. Fix the `pycharm_tarball`
@@ -116,7 +122,41 @@ For 2025.3 this converged on 144 of the 261 JARs under `lib/`: 127 from a
 trace against the fully untrimmed image, and 17 more from a second round once
 the plugins were gone.
 
-## Step 5: Validate
+## Step 5: Check what the Netty substitution is still worth
+
+`netty_splice.py` replaces the Netty that PyCharm merges into `lib/util-8.jar`
+and `lib/lib.jar` with the release pinned by `pycharm_netty_checksums.txt`.
+Refresh that pin the way `make pycharm_checksums` refreshes the other: fetch the
+thirteen modules at the current release from Maven Central and record their
+digests. The file names carry the version; nothing else does.
+
+Confirm three things before trusting the result.
+
+That PyCharm still merges Netty in rather than shipping it as a JAR of its own,
+and into those two JARs. A release that reorganises this trips the script's
+assertion, which is the good case; a release that adds a fourteenth module does
+not, and the old classes survive under the new metadata. After building, check
+that no `4.2.0.RC2`-era metadata remains.
+
+That what PyCharm merges in is still stock. It was for 2025.3, all 2515 classes
+byte identical to Maven Central, which is why substituting them discards nothing
+of JetBrains'. Compare digests rather than assuming it stays that way.
+
+That the classes JetBrains writes into Netty's own packages — three of them in
+2025.3, reaching members that are package-private — still survive the splice.
+The formatter loads none of them, so nothing here will tell you if they break;
+that is also why it does not matter.
+
+The version to pin is the current release, not the oldest one that clears the
+findings. Advisories are written against `>=4.2.0.Final`, and PyCharm ships a
+release candidate, which sorts below it and so matches none of them. An
+unmatched version reads as clean and is not, and an intermediate release can
+therefore report *more* findings than the RC it replaces.
+
+If a release of PyCharm ever merges in a current Netty, delete the script and
+the pin rather than keeping a substitution that does nothing.
+
+## Step 6: Validate
 
 Build with the list in place, then, each against the reference from Step 2:
 
@@ -127,6 +167,10 @@ Build with the list in place, then, each against the reference from Step 2:
 
 3. Azul's `make format` followed by `make check_clean`, against an image built
    here and pushed to a local registry — see the Azul notes in `README.md`
+
+Scan the result with `docker scout quickview` and compare against the image
+being replaced. A rise in findings is as much a result as a fall, and worth
+understanding before it is reported: the Netty substitution turned up that way.
 
 Report the size of the image and of `/opt/pycharm`, before and after the
 removal. A sudden change from one release to the next means the list is matching
