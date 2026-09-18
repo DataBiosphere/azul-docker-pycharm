@@ -139,13 +139,19 @@ ARG azul_docker_pycharm_upstream_version
 # needs more than this, but that happens in the stage above, whose packages stay
 # there.
 #
+# The X libraries are the runtime ones. Installing the `-dev` variants, as this
+# image did, pulls in `libc6-dev` and with it `linux-libc-dev`, which then had
+# to be force-removed again for the vulnerabilities it brought. Not installing
+# it in the first place is the same thing done earlier, and leaves no package
+# marked as removed while another still depends on it.
+#
 RUN \
   apt-get update \
   && apt-get upgrade -y \
   && apt-get install --no-install-recommends -y \
     python3 openjdk-21-jre-headless \
     openssh-client less ca-certificates \
-    libxtst-dev libxext-dev libxrender-dev libfreetype6-dev \
+    libxtst6 libxext6 libxrender1 libfreetype6 \
     libfontconfig1 libgtk2.0-0 libxslt1.1 libxxf86vm1 \
   && rm -rf /var/lib/apt/lists/* \
   && ln -s /usr/lib/jvm/java-21-openjdk-* /opt/java
@@ -153,12 +159,6 @@ RUN \
 ENV JAVA_HOME=/opt/java
 
 COPY --from=pycharm /opt/pycharm /opt/pycharm
-
-# Eliminate vulnerable OS packages not needed for how we use this image
-#
-RUN dpkg --remove --force-depends \
-    linux-libc-dev \
-    expat libexpat1 libexpat1-dev
 
 RUN useradd -ms /bin/bash developer
 
