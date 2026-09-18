@@ -45,6 +45,17 @@ ARG azul_docker_pycharm_upstream_version
 # that JAR from the list. Use Claude with the `pycharm-upgrade` skill to derive
 # the list again.
 #
+# The plugins removed here carry the most vulnerable code we have no use for:
+# `gateway-plugin` ships six remote development workers, one per platform, which
+# between them account for most of this image's critical and high findings, and
+# `textmate-plugin` bundles a copy of Handlebars. The helpers of the Python
+# plugin go too; the formatter does not run them.
+#
+# They are removed with `rm -r`, not `rm -rf`, so that a release renaming one of
+# them fails the build. Renames do happen: these were spelled `textmate` and
+# `tasks` until 2025.3 renamed them, and `rm -rf` had been quietly deleting
+# nothing for as long as that went unnoticed.
+#
 # The list subsumes `lib/protobuf.jar`, which an earlier instruction removed for
 # being vulnerable.
 #
@@ -69,7 +80,8 @@ RUN set -o pipefail \
      -o "/tmp/${pycharm_tarball}" \
   && ( cd /tmp && sha256sum --ignore-missing -c pycharm_checksums.txt ) \
   && tar --strip-components=1 -xzf "/tmp/${pycharm_tarball}" \
-  && rm -rf plugins/textmate plugins/tasks plugins/python-ce/helpers \
+  && rm -r plugins/textmate-plugin plugins/tasks-timeTracking plugins/gateway-plugin \
+        plugins/python-ce/helpers \
   && xargs rm < /tmp/pycharm_unused_jars.txt \
   && for jar in $(find . -name '*.jar') ; do \
        entries=$( \
