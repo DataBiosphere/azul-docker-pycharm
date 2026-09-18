@@ -92,11 +92,30 @@ RUN set -o pipefail \
 # searched instead, and the package deleted from wherever it turns up.
 #
 # The instruction this grew out of also named Netty, but its pattern was the
-# package path reversed and so never matched it in any release. Netty must stay
-# regardless: formatting loads 320 of its classes, whereas it loads none from
-# the I2P crypto library that sshj bundles.
+# package path reversed and so never matched it in any release. Carving Netty
+# would not do anyway: formatting loads 320 of its classes, whereas it loads
+# none from the I2P crypto library that sshj bundles.
+#
+# Netty is instead replaced with a current release of it, by the script below.
+# The version PyCharm merges in draws CVEs steadily, and there is no JAR of its
+# own to swap, so the classes and the metadata are substituted inside the JARs
+# that carry them. `pycharm_netty_checksums.txt` pins every module by digest,
+# and names the version by naming the files to fetch.
+#
+# What PyCharm merges in is stock: every one of its 2515 Netty classes is byte
+# identical to the release on Maven Central, so nothing of JetBrains' is lost in
+# the substitution. What is theirs are three classes they wrote into Netty's own
+# packages, to reach members that are package-private, and the script keeps
+# those. The formatter never loads them, so a release of Netty that moved what
+# they reach would not surface while formatting, which is the only thing this
+# image does.
+#
+# Whether this is still worth doing is a question for the next upgrade. If
+# PyCharm ever merges in a current release, the substitution becomes a no-op
+# worth deleting.
 #
 COPY pycharm_plugins.txt pycharm_unused_jars.txt /tmp/
+COPY pycharm_netty_checksums.txt netty_splice.py /tmp/
 
 RUN set -o pipefail \
   && ( cd plugins \
@@ -116,7 +135,18 @@ RUN set -o pipefail \
          zip -q -d "$jar" $entries ; \
        fi ; \
      done \
-  && rm /tmp/pycharm_plugins.txt /tmp/pycharm_unused_jars.txt
+  && mkdir /tmp/netty \
+  && ( cd /tmp/netty \
+       && while read -r sum jar ; do \
+            module=${jar%-*} ; \
+            version=${jar##*-} ; version=${version%.jar} ; \
+            curl --fail --no-progress-meter --location -O \
+              "https://repo1.maven.org/maven2/io/netty/${module}/${version}/${jar}" ; \
+          done < /tmp/pycharm_netty_checksums.txt \
+       && sha256sum -c /tmp/pycharm_netty_checksums.txt ) \
+  && python3 /tmp/netty_splice.py /opt/pycharm \
+  && rm /tmp/pycharm_plugins.txt /tmp/pycharm_unused_jars.txt \
+        /tmp/pycharm_netty_checksums.txt /tmp/netty_splice.py
 
 FROM debian:${azul_docker_pycharm_base_image_tag}
 
