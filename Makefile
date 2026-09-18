@@ -17,7 +17,7 @@ all:
 pycharm_checksums:
 	rm -f pycharm_checksums.txt
 	for arch in "" -aarch64 ; do \
-	    curl --fail --silent --location \
+	    curl --fail --no-progress-meter --location \
 	        https://download.jetbrains.com/python/pycharm-$(pycharm_version)$$arch.tar.gz.sha256 \
 	        >> pycharm_checksums.txt ; \
 	done

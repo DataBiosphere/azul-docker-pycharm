@@ -99,7 +99,8 @@ RUN set -o pipefail \
   && export pycharm_arch=$(python3 -c "print(dict(amd64='',arm64='-aarch64')['${TARGETARCH}'])") \
   && export pycharm_tarball="pycharm-${azul_docker_pycharm_upstream_version}${pycharm_arch}.tar.gz" \
   && echo "Downloading ${pycharm_tarball}" \
-  && curl -fsSL "https://download.jetbrains.com/python/${pycharm_tarball}" \
+  && curl --fail --no-progress-meter --location \
+     "https://download.jetbrains.com/python/${pycharm_tarball}" \
      -o "/tmp/${pycharm_tarball}" \
   && ( cd /tmp && sha256sum --ignore-missing -c pycharm_checksums.txt ) \
   && tar --strip-components=1 -xzf "/tmp/${pycharm_tarball}" \
