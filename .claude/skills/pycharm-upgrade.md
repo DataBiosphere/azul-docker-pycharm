@@ -11,10 +11,12 @@ Apply this skill when `azul_docker_pycharm_upstream_version` in
 
 Azul uses this image for one thing: the `format` target in Azul's `Makefile`
 runs `/opt/pycharm/bin/format.sh` in a container from it. Everything this image
-strips away — vulnerable OS packages, plugins, and the JARs named in
-`pycharm_unused_jars.txt`, half of those under `lib/` — is stripped on the
-assumption that formatting is all that has to keep working. Judge an upgrade by
-that, not by whether the IDE still starts.
+strips away — vulnerable OS packages, every plugin outside
+`pycharm_plugins.txt`, the bundled runtime, and the JARs named in
+`pycharm_unused_jars.txt` — is stripped on the assumption that formatting is
+all that has to keep working. Judge an upgrade by that, not by whether the IDE
+still starts. Rather more than half of the distribution is gone, and most of
+what it does still carry is never loaded.
 
 Every step compares formatted output against a reference produced by the image
 that is being replaced. Nothing is accepted because it looks right. Budget two
@@ -68,14 +70,29 @@ Azul's formatting. Stop and report that to the user; whether to accept a
 reformat of that code base is their decision, not something to absorb into this
 task.
 
-Keep this untrimmed image. Step 4 traces against it.
+Check `pycharm_plugins.txt` here too. A release that renames a plugin fails the
+build outright; one that splits a plugin in two, or moves what the formatter
+needs into a plugin not on the list, fails at run time with an
+`EssentialPluginMissingException` naming what it wants.
 
 ## Step 4: Derive the list of unused JARs
 
 `pycharm_unused_jars.txt` names the JARs under `lib/` that no class is loaded
-from while the formatter runs. Derive it against the untrimmed image from Step
-3, never carry one over: the list is specific to a release *and* to the set of
-plugins this image keeps.
+from while the formatter runs. Derive it anew, never carry one over: the list is
+specific to a release *and* to the set of plugins this image keeps.
+
+Derive it by converging from a build that works, not from an untrimmed one. An
+image with the plugins trimmed and `lib/` intact does not start at all: it dies
+in `com.intellij.util.system.OS.<clinit>`, reading a mapped buffer past its
+limit, before the formatter runs. Whatever that is, it means there is no
+untrimmed image to trace in this configuration.
+
+So: trace the image the previous list produced, remove whatever loaded nothing,
+rebuild, and validate. Repeat until a round finds nothing new. Each round is
+safe — every image along the way is one that formats correctly — and each
+converges on the answer from above. Starting from an empty list works too, if a
+release moves enough that the previous one is worthless: the first build is then
+untrimmed in `lib/` *and* in `plugins/`, which does start.
 
 Run the formatter over the mangled copy with `-verbose:class` in
 `_JAVA_OPTIONS`, capturing standard output. Index the classes in every JAR under
@@ -95,8 +112,9 @@ Intersect on exact class names, never on package prefixes. Prefixes like
 `com.intellij.platform` span both plugin and platform JARs, and matching on them
 credits a JAR for classes that came from somewhere else.
 
-For 2025.3 this yielded 127 of the 261 JARs under `lib/`, taking `/opt/pycharm`
-from 3.2 to 2.9 GB.
+For 2025.3 this converged on 144 of the 261 JARs under `lib/`: 127 from a
+trace against the fully untrimmed image, and 17 more from a second round once
+the plugins were gone.
 
 ## Step 5: Validate
 
@@ -122,11 +140,13 @@ layer: the container's file system shrinks, the image does not. That is why
 `Dockerfile` downloads, verifies, extracts and prunes in a single instruction.
 
 A list derived for a different plugin set will not do, even for the same release
-of PyCharm. The plugins this image keeps pull in platform code that formatting
-alone never touches — `platform-images` needs `commons-imaging`, for instance.
-Remove the JAR it lives in and every file fails to format, with
+of PyCharm. Plugins pull in platform code that formatting alone never touches —
+`platform-images` needs `commons-imaging`, for instance. Remove the JAR it lives
+in while that plugin is still installed and every file fails to format, with
 `NoClassDefFoundError` buried in a stack trace on stderr while stdout reports
-`Failed` for each file and `0 file(s) formatted` at the end.
+`Failed` for each file and `0 file(s) formatted` at the end. The list and
+`pycharm_plugins.txt` therefore move together: trimming plugins only ever makes
+the list longer, never shorter.
 
 The list is only as good as the sources it was derived from. A JAR that some
 future source file turns out to need announces itself the same way. The remedy
@@ -135,13 +155,19 @@ is to remove that JAR from the list, not to work around the error.
 `xargs rm` fails when a listed JAR is absent, which is deliberate: it catches a
 list carried over from a release that no longer ships that JAR.
 
+The JRE has to match. `Dockerfile` installs Debian's `openjdk-21-jre-headless`
+and removes the bundled JetBrains Runtime, so a release built against a newer
+Java fails in ways that have nothing to do with any list. Read `JAVA_VERSION`
+from `jbr/release` in the archive before assuming the pinned package still fits.
+
 Naming a path goes stale silently. 2025.3 dropped `lib/lib-client.jar`, which an
 earlier instruction carved packages out of by name; `zip -d` at least failed
 loudly, with exit code 12, "nothing to do". `Dockerfile` now searches every JAR
 that remains instead, and prints a line per JAR it carves. A `rm -rf` of a
 renamed path is the quiet version of the same trap, and this repository had
-three of them: `plugins/textmate` became `textmate-plugin` and `plugins/tasks`
-became `tasks-timeTracking`, so both removals had been deleting nothing.
+two of them: `plugins/textmate` became `textmate-plugin` and `plugins/tasks`
+became `tasks-timeTracking`, so both removals had been deleting nothing. Naming
+what to keep, as `pycharm_plugins.txt` does, fails loudly instead.
 
 Check what a pattern matches before trusting it. The Netty half of that carving
 instruction read `netty[./]io`, the package path reversed, and so matched

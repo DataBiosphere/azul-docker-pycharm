@@ -8,15 +8,28 @@ LABEL maintainer="Azul Group <azul-group@ucsc.edu>"
 
 ARG azul_docker_pycharm_internal_version=no_version
 
+# PyCharm bundles its own JRE, the JetBrains Runtime, which this image does not
+# install. The distribution's JRE is installed instead: it is patched whenever
+# the pin of the base image is bumped, whereas the bundled one is patched when
+# JetBrains ships a release. Its major version has to match the bundled one,
+# which `jbr/release` in the archive states.
+#
+# The path Debian installs it under carries the architecture, so it is
+# symlinked to one that does not, for `JAVA_HOME` to name below. That is how the
+# launcher finds a JRE once the bundled one is gone.
+#
 RUN \
   apt-get update \
   && apt-get upgrade -y \
   && apt-get install --no-install-recommends -y \
-    zip unzip python3 python3-dev \
+    zip unzip python3 python3-dev openjdk-21-jre-headless \
     gcc openssh-client less curl ca-certificates \
     libxtst-dev libxext-dev libxrender-dev libfreetype6-dev \
     libfontconfig1 libgtk2.0-0 libxslt1.1 libxxf86vm1 \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && ln -s /usr/lib/jvm/java-21-openjdk-* /opt/java
+
+ENV JAVA_HOME=/opt/java
 
 WORKDIR /opt/pycharm
 
@@ -45,16 +58,26 @@ ARG azul_docker_pycharm_upstream_version
 # that JAR from the list. Use Claude with the `pycharm-upgrade` skill to derive
 # the list again.
 #
-# The plugins removed here carry the most vulnerable code we have no use for:
-# `gateway-plugin` ships six remote development workers, one per platform, which
-# between them account for most of this image's critical and high findings, and
-# `textmate-plugin` bundles a copy of Handlebars. The helpers of the Python
-# plugin go too; the formatter does not run them.
+# `pycharm_plugins.txt` names the plugins to keep, and every other one is
+# removed. Naming what to keep rather than what to drop means a release that
+# bundles something new leaves it out by default, instead of adding it to this
+# image until someone notices. Naming what to drop had gone stale twice already:
+# 2025.3 renamed `textmate` to `textmate-plugin` and `tasks` to
+# `tasks-timeTracking`, and the `rm -rf` of the old names deleted nothing for as
+# long as that went unnoticed.
 #
-# They are removed with `rm -r`, not `rm -rf`, so that a release renaming one of
-# them fails the build. Renames do happen: these were spelled `textmate` and
-# `tasks` until 2025.3 renamed them, and `rm -rf` had been quietly deleting
-# nothing for as long as that went unnoticed.
+# The eight are what the platform needs in order to format Python. Missing one
+# of them is not subtle: the platform refuses to start and names what it wants,
+# as an `EssentialPluginMissingException`. The build fails if one is absent from
+# the distribution, rather than leaving it to that exception to explain.
+#
+# `plugins/plugin-classpath.txt` goes with them. It is a precomputed index of
+# the JARs of all bundled plugins, and with it in place the platform would not
+# start on this image. Without it, the platform scans the directory instead, and
+# tolerates the absence of the plugins removed here.
+#
+# The helpers of the Python plugin go too, and so do the debugger eggs and the
+# bundled runtime; the formatter runs none of them.
 #
 # The list subsumes `lib/protobuf.jar`, which an earlier instruction removed for
 # being vulnerable.
@@ -70,7 +93,7 @@ ARG azul_docker_pycharm_upstream_version
 # regardless: formatting loads 320 of its classes, whereas it loads none from
 # the I2P crypto library that sshj bundles.
 #
-COPY pycharm_checksums.txt pycharm_unused_jars.txt /tmp/
+COPY pycharm_checksums.txt pycharm_plugins.txt pycharm_unused_jars.txt /tmp/
 
 RUN set -o pipefail \
   && export pycharm_arch=$(python3 -c "print(dict(amd64='',arm64='-aarch64')['${TARGETARCH}'])") \
@@ -80,8 +103,10 @@ RUN set -o pipefail \
      -o "/tmp/${pycharm_tarball}" \
   && ( cd /tmp && sha256sum --ignore-missing -c pycharm_checksums.txt ) \
   && tar --strip-components=1 -xzf "/tmp/${pycharm_tarball}" \
-  && rm -r plugins/textmate-plugin plugins/tasks-timeTracking plugins/gateway-plugin \
-        plugins/python-ce/helpers \
+  && ( cd plugins \
+       && xargs -I {} test -d {} < /tmp/pycharm_plugins.txt \
+       && ls | grep -vxF -f /tmp/pycharm_plugins.txt | xargs rm -r ) \
+  && rm -r plugins/python-ce/helpers jbr debug-eggs \
   && xargs rm < /tmp/pycharm_unused_jars.txt \
   && for jar in $(find . -name '*.jar') ; do \
        entries=$( \
@@ -97,6 +122,7 @@ RUN set -o pipefail \
      done \
   && rm "/tmp/${pycharm_tarball}" \
         /tmp/pycharm_checksums.txt \
+        /tmp/pycharm_plugins.txt \
         /tmp/pycharm_unused_jars.txt
 
 # Eliminate vulnerable OS packages not needed for how we use this image

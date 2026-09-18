@@ -7,6 +7,7 @@ lib/externalProcess-rt.jar
 lib/groovy.jar
 lib/javax.activation.jar
 lib/javax.annotation-api.jar
+lib/jaxb-api.jar
 lib/jaxb-runtime.jar
 lib/jsch-agent.jar
 lib/lib-backend.jar
@@ -21,8 +22,10 @@ lib/module-intellij.libraries.cli.parser.jar
 lib/module-intellij.libraries.commons.cli.jar
 lib/module-intellij.libraries.commons.codec.jar
 lib/module-intellij.libraries.commons.compress.jar
+lib/module-intellij.libraries.commons.imaging.jar
 lib/module-intellij.libraries.commons.io.jar
 lib/module-intellij.libraries.commons.lang3.jar
+lib/module-intellij.libraries.commons.logging.jar
 lib/module-intellij.libraries.http.client.jar
 lib/module-intellij.libraries.icu4j.jar
 lib/module-intellij.libraries.imgscalr.jar
@@ -33,6 +36,7 @@ lib/module-intellij.libraries.java.websocket.jar
 lib/module-intellij.libraries.jaxen.jar
 lib/module-intellij.libraries.jcef.jar
 lib/module-intellij.libraries.jcip.jar
+lib/module-intellij.libraries.jediterm.core.jar
 lib/module-intellij.libraries.jediterm.ui.jar
 lib/module-intellij.libraries.jettison.jar
 lib/module-intellij.libraries.jsonpath.jar
@@ -52,9 +56,13 @@ lib/module-intellij.libraries.miglayout.swing.jar
 lib/module-intellij.libraries.oro.matcher.jar
 lib/module-intellij.libraries.proxy.vole.jar
 lib/module-intellij.libraries.rd.text.jar
+lib/module-intellij.libraries.snakeyaml.engine.jar
+lib/module-intellij.libraries.snakeyaml.jar
 lib/module-intellij.libraries.sshj.jar
 lib/module-intellij.libraries.velocity.jar
 lib/module-intellij.libraries.winp.jar
+lib/module-intellij.libraries.xerces.jar
+lib/module-intellij.libraries.xstream.jar
 lib/module-intellij.libraries.xtext.xbase.jar
 lib/module-intellij.libraries.xz.jar
 lib/module-intellij.platform.polySymbols.backend.jar
@@ -73,6 +81,7 @@ lib/modules/intellij.libraries.compose.runtime.desktop.jar
 lib/modules/intellij.libraries.grpc.jar
 lib/modules/intellij.libraries.grpc.netty.shaded.jar
 lib/modules/intellij.libraries.kotlinx.document.store.mvstore.jar
+lib/modules/intellij.libraries.lucene.common.jar
 lib/modules/intellij.libraries.microba.jar
 lib/modules/intellij.libraries.skiko.jar
 lib/modules/intellij.libraries.xml.rpc.jar
@@ -80,6 +89,7 @@ lib/modules/intellij.platform.buildView.frontend.jar
 lib/modules/intellij.platform.clouds.jar
 lib/modules/intellij.platform.collaborationTools.auth.base.jar
 lib/modules/intellij.platform.collaborationTools.auth.jar
+lib/modules/intellij.platform.collaborationTools.jar
 lib/modules/intellij.platform.compose.jar
 lib/modules/intellij.platform.coverage.agent.jar
 lib/modules/intellij.platform.dap.jar
@@ -89,6 +99,8 @@ lib/modules/intellij.platform.diagnostic.telemetry.agent.extension.jar
 lib/modules/intellij.platform.editor.backend.jar
 lib/modules/intellij.platform.execution.serviceView.frontend.jar
 lib/modules/intellij.platform.ide.impl.wsl.jar
+lib/modules/intellij.platform.identifiers.highlighting.backend.jar
+lib/modules/intellij.platform.identifiers.highlighting.shared.jar
 lib/modules/intellij.platform.inline.completion.jar
 lib/modules/intellij.platform.inspect.jar
 lib/modules/intellij.platform.jewel.foundation.jar
@@ -113,6 +125,8 @@ lib/modules/intellij.platform.scriptDebugger.protocolReaderRuntime.jar
 lib/modules/intellij.platform.scriptDebugger.ui.jar
 lib/modules/intellij.platform.searchEverywhere.frontend.jar
 lib/modules/intellij.platform.smRunner.vcs.jar
+lib/modules/intellij.platform.vcs.dvcs.impl.shared.jar
+lib/modules/intellij.platform.vcs.dvcs.jar
 lib/modules/intellij.platform.vcs.impl.exec.jar
 lib/modules/intellij.platform.vcs.impl.frontend.jar
 lib/modules/intellij.platform.vcs.log.graph.impl.jar
@@ -120,6 +134,9 @@ lib/modules/intellij.platform.vcs.log.graph.jar
 lib/modules/intellij.platform.warmup.jar
 lib/modules/intellij.profiler.asyncOne.jar
 lib/modules/intellij.profiler.ultimate.ideaAsyncProfiler.jar
+lib/modules/intellij.rd.ide.model.generated.jar
+lib/modules/intellij.rd.ui.jar
+lib/modules/intellij.settingsSync.core.jar
 lib/modules/intellij.spellchecker.xml.jar
 lib/modules/intellij.xml.langInjection.xpath.jar
 lib/protobuf.jar

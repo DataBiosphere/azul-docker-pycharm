@@ -1,0 +1,8 @@
+json
+jupyter-plugin
+markdown
+notebooks-plugin
+pycharm-community-customization-shared
+pycharm-pro-customization
+python-ce
+toml
