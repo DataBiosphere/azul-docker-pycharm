@@ -14,14 +14,14 @@ runs `/opt/pycharm/bin/format.sh` in a container from it. Everything this image
 strips away — vulnerable OS packages, every plugin outside
 `pycharm_plugins.txt`, the bundled runtime, and the JARs named in
 `pycharm_unused_jars.txt` — is stripped on the assumption that formatting is
-all that has to keep working. So is the Netty that `netty_splice.py` swaps for
-a current release. Judge an upgrade by that, not by whether the IDE still
+all that has to keep working. So are the Netty and the Jackson that
+`splice.py` swaps for current releases. Judge an upgrade by that, not by whether the IDE still
 starts. Rather more than half of the distribution is gone, and most of what it
 does still carry is never loaded.
 
 Three files drive it, and an upgrade may need all three revisited:
 `pycharm_plugins.txt`, `pycharm_unused_jars.txt`, and
-`pycharm_netty_checksums.txt`.
+`pycharm_maven_checksums.txt`.
 
 Every step compares formatted output against a reference produced by the image
 that is being replaced. Nothing is accepted because it looks right. Budget two
@@ -122,39 +122,48 @@ For 2025.3 this converged on 144 of the 261 JARs under `lib/`: 127 from a
 trace against the fully untrimmed image, and 17 more from a second round once
 the plugins were gone.
 
-## Step 5: Check what the Netty substitution is still worth
+## Step 5: Check what the substitutions are still worth
 
-`netty_splice.py` replaces the Netty that PyCharm merges into `lib/util-8.jar`
-and `lib/lib.jar` with the release pinned by `pycharm_netty_checksums.txt`.
-Refresh that pin the way `make pycharm_checksums` refreshes the other: fetch the
-thirteen modules at the current release from Maven Central and record their
-digests. The file names carry the version; nothing else does.
+`splice.py` replaces the libraries PyCharm merges into JARs of its own naming
+with the releases pinned by `pycharm_maven_checksums.txt`. Two are substituted:
+Netty, in `lib/util-8.jar` and `lib/lib.jar`, and Jackson, in the three
+`lib/module-intellij.libraries.jackson*.jar` and in
+`lib/modules/intellij.platform.settings.local.jar`, which is mostly platform
+classes with one Jackson module among them.
 
-Confirm three things before trusting the result.
+Refresh the pin by fetching each artifact at the current release from Maven
+Central and recording its digest against its full path in the repository. The
+path carries the module and the version; nothing else does. Note that Jackson
+does not version its modules in lockstep — `jackson-annotations` is at 2.22
+where the rest are at 2.22.2 — so the pin is per module, not per library.
 
-That PyCharm still merges Netty in rather than shipping it as a JAR of its own,
-and into those two JARs. A release that reorganises this trips the script's
-assertion, which is the good case; a release that adds a fourteenth module does
-not, and the old classes survive under the new metadata. After building, check
-that no `4.2.0.RC2`-era metadata remains.
+The build itself now checks that each substitution was complete: that every
+class of a library comes from the artifacts spliced in, that every Maven version
+is the one pinned for its module, and that every module a rewritten JAR carries
+is one the table names. A release that moves a library, or adds a module to it,
+fails the build rather than producing an image that looks substituted. What is
+left to judge by hand is whether the substitution is still the right thing:
 
-That what PyCharm merges in is still stock. It was for 2025.3, all 2515 classes
-byte identical to Maven Central, which is why substituting them discards nothing
-of JetBrains'. Compare digests rather than assuming it stays that way.
+That what PyCharm merges in is still stock. It was for 2025.3 — all 2515 Netty
+classes and all 1212 Jackson ones byte identical to Maven Central — which is why
+substituting them discards nothing of JetBrains'. Compare digests rather than
+assuming it stays that way.
 
-That the classes JetBrains writes into Netty's own packages — three of them in
-2025.3, reaching members that are package-private — still survive the splice.
-The formatter loads none of them, so nothing here will tell you if they break;
-that is also why it does not matter.
+That the classes JetBrains writes into a library's own packages are still named
+in the table. Netty had three in 2025.3, reaching members that are
+package-private; Jackson has none. The formatter loads none of them, so nothing
+here will tell you if they break; that is also why it does not matter.
 
 The version to pin is the current release, not the oldest one that clears the
-findings. Advisories are written against `>=4.2.0.Final`, and PyCharm ships a
-release candidate, which sorts below it and so matches none of them. An
-unmatched version reads as clean and is not, and an intermediate release can
-therefore report *more* findings than the RC it replaces.
+findings. Advisories against Netty are written against `>=4.2.0.Final`, and
+PyCharm ships a release candidate, which sorts below it and so matches none of
+them. An unmatched version reads as clean and is not, and an intermediate
+release can therefore report *more* findings than the RC it replaces.
 
-If a release of PyCharm ever merges in a current Netty, delete the script and
-the pin rather than keeping a substitution that does nothing.
+If a release of PyCharm ever merges in a current version of one of these,
+remove it from the table rather than keeping a substitution that does nothing.
+A library PyCharm stops merging in fails the build at the missing JAR, which is
+the prompt to remove it.
 
 ## Step 6: Validate
 
