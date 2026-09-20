@@ -115,7 +115,7 @@ RUN set -o pipefail \
 # worth deleting.
 #
 COPY pycharm_plugins.txt pycharm_unused_jars.txt /tmp/
-COPY pycharm_netty_checksums.txt netty_splice.py /tmp/
+COPY pycharm_maven_checksums.txt splice.py /tmp/
 
 RUN set -o pipefail \
   && ( cd plugins \
@@ -135,18 +135,16 @@ RUN set -o pipefail \
          zip -q -d "$jar" $entries ; \
        fi ; \
      done \
-  && mkdir /tmp/netty \
-  && ( cd /tmp/netty \
-       && while read -r sum jar ; do \
-            module=${jar%-*} ; \
-            version=${jar##*-} ; version=${version%.jar} ; \
-            curl --fail --no-progress-meter --location -O \
-              "https://repo1.maven.org/maven2/io/netty/${module}/${version}/${jar}" ; \
-          done < /tmp/pycharm_netty_checksums.txt \
-       && sha256sum -c /tmp/pycharm_netty_checksums.txt ) \
-  && python3 /tmp/netty_splice.py /opt/pycharm \
+  && mkdir /tmp/maven \
+  && ( cd /tmp/maven \
+       && while read -r sum path ; do \
+            curl --fail --no-progress-meter --location --create-dirs \
+              -o "${path}" "https://repo1.maven.org/maven2/${path}" ; \
+          done < /tmp/pycharm_maven_checksums.txt \
+       && sha256sum -c /tmp/pycharm_maven_checksums.txt ) \
+  && python3 /tmp/splice.py /opt/pycharm \
   && rm /tmp/pycharm_plugins.txt /tmp/pycharm_unused_jars.txt \
-        /tmp/pycharm_netty_checksums.txt /tmp/netty_splice.py
+        /tmp/pycharm_maven_checksums.txt /tmp/splice.py
 
 FROM debian:${azul_docker_pycharm_base_image_tag}
 
