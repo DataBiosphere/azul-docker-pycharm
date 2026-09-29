@@ -23,7 +23,8 @@ env:
   #
   azul_docker_pycharm_base_image_tag: trixie-20260918-slim
 
-  # The version of PyCharm to install in this image.
+  # The version of PyCharm to install in this image. If you change this, you
+  # also need to run `make pycharm_checksums` and commit the result.
   #
   azul_docker_pycharm_upstream_version: 2025.3.6.1
 
