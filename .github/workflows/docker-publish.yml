@@ -21,7 +21,7 @@ env:
   # value isn't reflected in the tag for this image, you also need to bump the
   # internal version below when changing this variable.
   #
-  azul_docker_pycharm_base_image_tag: trixie-20261005-slim
+  azul_docker_pycharm_base_image_tag: trixie-20261027-slim
 
   # The version of PyCharm to install in this image. If you change this, you
   # also need to run `make pycharm_checksums` and commit the result.
@@ -32,7 +32,7 @@ env:
   # upstream image followed by the value of this variable. Increment this value
   # to update the OS packages installed in the image.
   #
-  azul_docker_pycharm_internal_version: 90
+  azul_docker_pycharm_internal_version: 91
 
 jobs:
   build:
