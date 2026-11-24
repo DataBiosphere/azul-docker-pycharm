@@ -32,7 +32,7 @@ env:
   # upstream image followed by the value of this variable. Increment this value
   # to update the OS packages installed in the image.
   #
-  azul_docker_pycharm_internal_version: 92
+  azul_docker_pycharm_internal_version: 93
 
 jobs:
   build:
